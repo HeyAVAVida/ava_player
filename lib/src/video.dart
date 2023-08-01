@@ -318,35 +318,33 @@ class _YoYoPlayerState extends State<YoYoPlayer>
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: AspectRatio(
-        aspectRatio: fullScreen
-            ? MediaQuery.of(context).size.calculateAspectRatio()
-            : widget.aspectRatio,
-        child: controller.value.isInitialized
-            ? Stack(
-                children: <Widget>[
-                  GestureDetector(
-                    onTap: () {
-                      toggleControls();
-                      removeOverlay();
-                    },
-                    onDoubleTap: () {
-                      togglePlay();
-                      removeOverlay();
-                    },
-                    child: Center(
-                      child: AspectRatio(
-                        aspectRatio: controller.value.aspectRatio,
-                        child: VideoPlayer(controller),
-                      ),
+    return AspectRatio(
+      aspectRatio: fullScreen
+          ? MediaQuery.of(context).size.calculateAspectRatio()
+          : widget.aspectRatio,
+      child: controller.value.isInitialized
+          ? Stack(
+              children: <Widget>[
+                GestureDetector(
+                  onTap: () {
+                    toggleControls();
+                    removeOverlay();
+                  },
+                  onDoubleTap: () {
+                    togglePlay();
+                    removeOverlay();
+                  },
+                  child: Center(
+                    child: AspectRatio(
+                      aspectRatio: controller.value.aspectRatio,
+                      child: VideoPlayer(controller),
                     ),
                   ),
-                  ...videoBuiltInChildren(),
-                ],
-              )
-            : VideoLoading(loadingStyle: widget.videoLoadingStyle),
-      ),
+                ),
+                ...videoBuiltInChildren(),
+              ],
+            )
+          : VideoLoading(loadingStyle: widget.videoLoadingStyle),
     );
   }
 
@@ -366,6 +364,7 @@ class _YoYoPlayerState extends State<YoYoPlayer>
       child: Align(
         alignment: Alignment.topCenter,
         child: Container(
+          margin: fullScreen ? const EdgeInsets.only(top: 30) : EdgeInsets.zero,
           width: MediaQuery.of(context).size.width,
           padding: widget.videoStyle.actionBarPadding ??
               const EdgeInsets.symmetric(
