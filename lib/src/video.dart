@@ -1031,7 +1031,8 @@ class _YoYoPlayerState extends State<YoYoPlayer>
       overlayEntry = OverlayEntry(
         builder: (_) => m3u8List(),
       );
-      Overlay.of(context).insert(overlayEntry!);
+
+      Overlay.of(context)?.insert(overlayEntry!);
     });
   }
 
