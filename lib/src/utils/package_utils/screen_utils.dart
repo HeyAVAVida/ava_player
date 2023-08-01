@@ -5,7 +5,7 @@ class ScreenUtils {
     if (fullScreen) {
       AutoOrientation.portraitUpMode();
     } else {
-      AutoOrientation.landscapeRightMode();
+      AutoOrientation.portraitUpMode();
     }
   }
 }

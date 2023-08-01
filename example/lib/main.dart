@@ -81,12 +81,12 @@ class _MyAppState extends State<MyApp> {
               // showLiveDirectButton: true,
               // enableSystemOrientationsOverride: false,
             ),
-            videoLoadingStyle: const VideoLoadingStyle(
+            videoLoadingStyle: VideoLoadingStyle(
               loading: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
+                  children: const [
                     Image(
                       image: AssetImage('image/yoyo_logo.png'),
                       fit: BoxFit.fitHeight,

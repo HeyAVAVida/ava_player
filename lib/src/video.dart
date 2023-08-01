@@ -251,6 +251,8 @@ class _YoYoPlayerState extends State<YoYoPlayer>
   /// and if not it will display with the disable color.
   bool isAtLivePosition = true;
 
+  bool userRequestFullScreen = false;
+
   @override
   void initState() {
     super.initState();
@@ -268,26 +270,13 @@ class _YoYoPlayerState extends State<YoYoPlayer>
     WidgetsBinding.instance.addPostFrameCallback((callback) {
       WidgetsBinding.instance.addPersistentFrameCallback((callback) {
         if (!mounted) return;
-        var orientation = MediaQuery.of(context).orientation;
-        bool? fullScr;
 
-        if (orientation == Orientation.landscape) {
-          // Horizontal screen
-          fullScr = true;
-          SystemChrome.setEnabledSystemUIMode(
-            SystemUiMode.manual,
-            overlays: [SystemUiOverlay.bottom],
-          );
-        } else if (orientation == Orientation.portrait) {
-          // Portrait screen
-          fullScr = false;
-          SystemChrome.setEnabledSystemUIMode(
-            SystemUiMode.manual,
-            overlays: SystemUiOverlay.values,
-          );
-        }
+        SystemChrome.setEnabledSystemUIMode(
+          SystemUiMode.manual,
+          overlays: SystemUiOverlay.values,
+        );
 
-        if (fullScr != fullScreen) {
+        if (userRequestFullScreen != fullScreen) {
           setState(() {
             fullScreen = !fullScreen;
             _navigateLocally(context);
@@ -329,33 +318,35 @@ class _YoYoPlayerState extends State<YoYoPlayer>
 
   @override
   Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: fullScreen
-          ? MediaQuery.of(context).size.calculateAspectRatio()
-          : widget.aspectRatio,
-      child: controller.value.isInitialized
-          ? Stack(
-              children: <Widget>[
-                GestureDetector(
-                  onTap: () {
-                    toggleControls();
-                    removeOverlay();
-                  },
-                  onDoubleTap: () {
-                    togglePlay();
-                    removeOverlay();
-                  },
-                  child: Center(
-                    child: AspectRatio(
-                      aspectRatio: controller.value.aspectRatio,
-                      child: VideoPlayer(controller),
+    return Center(
+      child: AspectRatio(
+        aspectRatio: fullScreen
+            ? MediaQuery.of(context).size.calculateAspectRatio()
+            : widget.aspectRatio,
+        child: controller.value.isInitialized
+            ? Stack(
+                children: <Widget>[
+                  GestureDetector(
+                    onTap: () {
+                      toggleControls();
+                      removeOverlay();
+                    },
+                    onDoubleTap: () {
+                      togglePlay();
+                      removeOverlay();
+                    },
+                    child: Center(
+                      child: AspectRatio(
+                        aspectRatio: controller.value.aspectRatio,
+                        child: VideoPlayer(controller),
+                      ),
                     ),
                   ),
-                ),
-                ...videoBuiltInChildren(),
-              ],
-            )
-          : VideoLoading(loadingStyle: widget.videoLoadingStyle),
+                  ...videoBuiltInChildren(),
+                ],
+              )
+            : VideoLoading(loadingStyle: widget.videoLoadingStyle),
+      ),
     );
   }
 
@@ -406,7 +397,21 @@ class _YoYoPlayerState extends State<YoYoPlayer>
                 width: widget.videoStyle.qualityButtonAndFullScrIcoSpace,
               ),
               InkWell(
-                onTap: () => ScreenUtils.toggleFullScreen(fullScreen),
+                onTap: () {
+                  ScreenUtils.toggleFullScreen(fullScreen);
+
+                  if (!fullScreen) {
+                    setState(() {
+                      userRequestFullScreen = true;
+                    });
+                  }
+
+                  if (fullScreen) {
+                    setState(() {
+                      userRequestFullScreen = false;
+                    });
+                  }
+                },
                 child: widget.videoStyle.fullscreenIcon ??
                     Icon(
                       Icons.fullscreen,
@@ -927,6 +932,12 @@ class _YoYoPlayerState extends State<YoYoPlayer>
       LocalHistoryEntry(
         onRemove: () {
           if (fullScreen) ScreenUtils.toggleFullScreen(fullScreen);
+
+          if (fullScreen) {
+            setState(() {
+              userRequestFullScreen = false;
+            });
+          }
         },
       ),
     );
@@ -1021,7 +1032,7 @@ class _YoYoPlayerState extends State<YoYoPlayer>
       overlayEntry = OverlayEntry(
         builder: (_) => m3u8List(),
       );
-      Overlay.of(context)?.insert(overlayEntry!);
+      Overlay.of(context).insert(overlayEntry!);
     });
   }
 
