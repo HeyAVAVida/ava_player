@@ -185,7 +185,7 @@ class _YoYoPlayerState extends State<YoYoPlayer>
   Animation<double>? controlBottomBarAnimation;
 
   /// Video Player Controller
-  late VideoPlayerController controller;
+  VideoPlayerController? controller;
 
   /// Video init error default :false
   bool hasInitError = false;
@@ -255,9 +255,9 @@ class _YoYoPlayerState extends State<YoYoPlayer>
 
   @override
   void initState() {
-    super.initState();
-
     urlCheck(widget.url);
+
+    super.initState();
 
     /// Control bar animation
     controlBarAnimationController = AnimationController(
@@ -311,18 +311,27 @@ class _YoYoPlayerState extends State<YoYoPlayer>
   @override
   void dispose() {
     m3u8Clean();
-    controller.dispose();
+    if (controller != null) controller!.dispose();
     controlBarAnimationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (controller == null) {
+      return AspectRatio(
+        aspectRatio: fullScreen
+            ? MediaQuery.of(context).size.calculateAspectRatio()
+            : widget.aspectRatio,
+        child: const SizedBox(),
+      );
+    }
+
     return AspectRatio(
       aspectRatio: fullScreen
           ? MediaQuery.of(context).size.calculateAspectRatio()
           : widget.aspectRatio,
-      child: controller.value.isInitialized
+      child: controller!.value.isInitialized
           ? Stack(
               children: <Widget>[
                 GestureDetector(
@@ -336,8 +345,8 @@ class _YoYoPlayerState extends State<YoYoPlayer>
                   },
                   child: Center(
                     child: AspectRatio(
-                      aspectRatio: controller.value.aspectRatio,
-                      child: VideoPlayer(controller),
+                      aspectRatio: controller!.value.aspectRatio,
+                      child: VideoPlayer(controller!),
                     ),
                   ),
                 ),
@@ -427,12 +436,13 @@ class _YoYoPlayerState extends State<YoYoPlayer>
 
   /// Video player BottomBar
   Widget bottomBar() {
+    if (controller == null) return const SizedBox();
     return Visibility(
       visible: showMenu,
       child: Align(
         alignment: Alignment.bottomCenter,
         child: PlayerBottomBar(
-          controller: controller,
+          controller: controller!,
           videoSeek: videoSeek ?? '00:00:00',
           videoDuration: videoDuration ?? '00:00:00',
           videoStyle: widget.videoStyle,
@@ -458,9 +468,11 @@ class _YoYoPlayerState extends State<YoYoPlayer>
         child: IntrinsicWidth(
           child: InkWell(
             onTap: () {
-              controller.seekTo(controller.value.duration).then((value) {
-                widget.onLiveDirectTap?.call(controller.value);
-                controller.play();
+              if (controller == null) return;
+
+              controller!.seekTo(controller!.value.duration).then((value) {
+                widget.onLiveDirectTap?.call(controller!.value);
+                controller!.play();
               });
             },
             splashColor: Colors.transparent,
@@ -755,21 +767,25 @@ class _YoYoPlayerState extends State<YoYoPlayer>
   }
 
 // Init video controller
-  void videoControlSetup(String? url) async {
+  void videoControlSetup(String? url) {
     videoInit(url);
 
-    controller.addListener(listener);
+    if (controller == null) return;
+
+    controller!.addListener(listener);
 
     if (widget.autoPlayVideoAfterInit) {
-      controller.play();
+      controller!.play();
     }
-    widget.onVideoInitCompleted?.call(controller);
+    widget.onVideoInitCompleted?.call(controller!);
   }
 
 // Video listener
   void listener() async {
+    if (controller == null) return;
+
     if (widget.videoStyle.showLiveDirectButton) {
-      if (controller.value.position != controller.value.duration) {
+      if (controller!.value.position != controller!.value.duration) {
         if (isAtLivePosition) {
           setState(() {
             isAtLivePosition = false;
@@ -784,16 +800,16 @@ class _YoYoPlayerState extends State<YoYoPlayer>
       }
     }
 
-    if (controller.value.isInitialized && controller.value.isPlaying) {
+    if (controller!.value.isInitialized && controller!.value.isPlaying) {
       if (!await Wakelock.enabled) {
         await Wakelock.enable();
       }
 
       setState(() {
-        videoDuration = controller.value.duration.convertDurationToString();
-        videoSeek = controller.value.position.convertDurationToString();
-        videoSeekSecond = controller.value.position.inSeconds.toDouble();
-        videoDurationSecond = controller.value.duration.inSeconds.toDouble();
+        videoDuration = controller!.value.duration.convertDurationToString();
+        videoSeek = controller!.value.position.convertDurationToString();
+        videoSeekSecond = controller!.value.position.inSeconds.toDouble();
+        videoDurationSecond = controller!.value.duration.inSeconds.toDouble();
       });
     } else {
       if (await Wakelock.enabled) {
@@ -804,10 +820,12 @@ class _YoYoPlayerState extends State<YoYoPlayer>
   }
 
   void createHideControlBarTimer() {
+    if (controller == null) return;
+
     clearHideControlBarTimer();
     showTime = Timer(const Duration(milliseconds: 5000), () {
       // if (controller != null && controller.value.isPlaying) {
-      if (controller.value.isPlaying) {
+      if (controller!.value.isPlaying) {
         if (showMenu) {
           setState(() {
             showMenu = false;
@@ -854,14 +872,16 @@ class _YoYoPlayerState extends State<YoYoPlayer>
   }
 
   void togglePlay() {
+    if (controller == null) return;
+
     createHideControlBarTimer();
-    if (controller.value.isPlaying) {
-      controller.pause().then((_) {
-        widget.onPlayButtonTap?.call(controller.value.isPlaying);
+    if (controller!.value.isPlaying) {
+      controller!.pause().then((_) {
+        widget.onPlayButtonTap?.call(controller!.value.isPlaying);
       });
     } else {
-      controller.play().then((_) {
-        widget.onPlayButtonTap?.call(controller.value.isPlaying);
+      controller!.play().then((_) {
+        widget.onPlayButtonTap?.call(controller!.value.isPlaying);
       });
     }
     setState(() {});
@@ -943,10 +963,12 @@ class _YoYoPlayerState extends State<YoYoPlayer>
   }
 
   void onSelectQuality(M3U8Data data) async {
-    lastPlayedPos = await controller.position;
+    if (controller == null) return;
 
-    if (controller.value.isPlaying) {
-      await controller.pause();
+    lastPlayedPos = await controller!.position;
+
+    if (controller!.value.isPlaying) {
+      await controller!.pause();
     }
 
     if (data.dataQuality == "Auto") {
@@ -975,7 +997,9 @@ class _YoYoPlayerState extends State<YoYoPlayer>
   }
 
   void playLocalM3U8File(String url) {
-    controller.dispose();
+    if (controller == null) return;
+
+    controller!.dispose();
     controller = VideoPlayerController.networkUrl(
       Uri.parse(url),
       closedCaptionFile: widget.closedCaptionFile,
@@ -983,14 +1007,14 @@ class _YoYoPlayerState extends State<YoYoPlayer>
     )..initialize().then((_) {
         setState(() => hasInitError = false);
         seekToLastPlayingPosition();
-        controller.play();
+        controller!.play();
       }).catchError((e) {
         setState(() => hasInitError = true);
         print('Init local file error $e');
       });
 
-    controller.addListener(listener);
-    controller.play();
+    controller!.addListener(listener);
+    controller!.play();
   }
 
   void m3u8Clean() async {
@@ -1044,9 +1068,9 @@ class _YoYoPlayerState extends State<YoYoPlayer>
   }
 
   void seekToLastPlayingPosition() {
-    if (lastPlayedPos != null) {
-      controller.seekTo(lastPlayedPos!);
-      widget.onVideoInitCompleted?.call(controller);
+    if (lastPlayedPos != null && controller != null) {
+      controller!.seekTo(lastPlayedPos!);
+      widget.onVideoInitCompleted?.call(controller!);
       lastPlayedPos = null;
     }
   }
